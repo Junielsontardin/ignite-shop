@@ -8,14 +8,16 @@ import Stripe from "stripe";
 import { ProductCard } from "@/components/ProductCard";
 
 interface HomeProps {
-  products: {
-    id: string,
-    name: string,
-    description: string,
-    imageUrl: string,
-    price: number,
-    priceId: string
-  }[]
+  products: StripeProducts[]
+}
+
+interface StripeProducts {
+  id: string,
+  name: string,
+  description: string,
+  imageUrl: string,
+  price: number,
+  priceId: string
 }
 
 const Home = ({ products }: HomeProps) => {
@@ -47,19 +49,20 @@ const Home = ({ products }: HomeProps) => {
 
 export default Home;
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps<HomeProps> = async () => {
   const response = await stripe.products.list({
     expand: ['data.default_price']
   })
 
   const products = response.data.map((product) => {
-    const price = product.default_price as Stripe.Price
+    const price = product.default_price as Stripe.Price;
+
     return {
       id: product.id,
       name: product.name,
-      description: product.description,
+      description: product.description!,
       imageUrl: product.images[0],
-      price: price.unit_amount,
+      price: price.unit_amount!,
       priceId: price.id
     }
   })
