@@ -21,7 +21,12 @@ export const FooterInformationsCart = styled('footer', {
         marginTop: '3.5rem',
         border: 'none',
         borderRadius: 8,
-        cursor: 'pointer'
+        cursor: 'pointer',
+
+        '&:disabled': {
+            opacity: 0.6,
+            cursor: 'default'
+        }
     }
 })
 

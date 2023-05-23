@@ -1,13 +1,11 @@
-import { ProductCard, SliderContainer } from "@/styles/pages/home";
-import Image from "next/image";
+import { SliderContainer } from "@/styles/pages/home";
 import Link from "next/link";
-import Camisa from '../assets/t-shirt2.png'
-import { Bag } from '@phosphor-icons/react'
 import { useKeenSlider } from 'keen-slider/react'
 import 'keen-slider/keen-slider.min.css'
 import { GetStaticProps } from "next";
 import { stripe } from "@/lib/stripe";
 import Stripe from "stripe";
+import { ProductCard } from "@/components/ProductCard";
 
 interface HomeProps {
   products: {
@@ -15,12 +13,12 @@ interface HomeProps {
     name: string,
     description: string,
     imageUrl: string,
-    price: number
+    price: number,
+    priceId: string
   }[]
 }
 
 const Home = ({ products }: HomeProps) => {
-  console.log(products)
   const [sliderRef] = useKeenSlider({
     slides: {
       perView: 3,
@@ -33,18 +31,13 @@ const Home = ({ products }: HomeProps) => {
       {products.map((product) => {
         return (
           <Link key={product.id} href={`/product/${product.id}`} className="keen-slider__slide">
-            <ProductCard>
-              <Image src={product.imageUrl} width={520} height={480} alt=""/>
-              <footer>
-                <div>
-                  <span>{product.name}</span>
-                  <span>R$ {product.price / 100}</span>
-                </div>
-                <button>
-                  <Bag size={24} weight="bold"/>
-                </button>
-              </footer>
-            </ProductCard>
+            <ProductCard 
+              id={product.id}
+              name={product.name}
+              price={product.price}
+              priceId={product.priceId}
+              imageUrl={product.imageUrl}
+            />
           </Link>
         )
       })}
@@ -66,7 +59,8 @@ export const getStaticProps: GetStaticProps = async () => {
       name: product.name,
       description: product.description,
       imageUrl: product.images[0],
-      price: price.unit_amount
+      price: price.unit_amount,
+      priceId: price.id
     }
   })
 

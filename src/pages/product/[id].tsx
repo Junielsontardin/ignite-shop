@@ -4,8 +4,9 @@ import { GetStaticPaths, GetStaticProps } from "next";
 import { stripe } from "@/lib/stripe";
 import Stripe from "stripe";
 import { useRouter } from "next/router";
-import axios from "axios";
-import { useState } from "react";
+import { useCartContext } from "@/contexts/cartContext";
+import { formatPriceToBrl } from "@/utils/formatPriceToBrl";
+import { ParsedUrlQuery } from "querystring";
 
 interface ProductProps {
   product: {
@@ -18,29 +19,30 @@ interface ProductProps {
   }
 }
 
+interface GetStaticProductParams extends ParsedUrlQuery{
+  id: string
+}
+
 const Product = ({ product }: ProductProps) => {
-  const [isLoadingToCheckout, setIsLoadingToCheckout] = useState(false);
+  const { addItemToCart } = useCartContext();
   const { isFallback } = useRouter();
 
   if(isFallback) {
     return <p>Loading ...</p>
   }
 
-  const handleBuyButton = async () => {
-    try {
-      setIsLoadingToCheckout(true)
-      const response = await axios.post('/api/checkout', {
-        priceId: product.priceId
-      })
+  const handleBuyButton = () => {
 
-      const { checkoutUrl } = response.data;
-
-      window.location.href = checkoutUrl;
-
-    } catch(err) {
-      setIsLoadingToCheckout(false)
-      alert("Falha ao redirecionar para o checkout!")
+    const itemToAddToCart = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      priceId: product.priceId,
+      imageUrl: product.imageUrl,
+      quantity: 1
     }
+
+    addItemToCart(itemToAddToCart)
   }
 
   return (
@@ -50,9 +52,9 @@ const Product = ({ product }: ProductProps) => {
       </div>
       <ProductInformations>
         <h1>{product.name}</h1>
-        <span>R$ {product.price / 100}</span>
+        <span>{formatPriceToBrl(product.price)}</span>
         <p>{product.description}</p>
-        <button onClick={handleBuyButton} disabled={isLoadingToCheckout}>
+        <button onClick={handleBuyButton}>
           Colocar na sacola
         </button>
       </ProductInformations>
@@ -72,7 +74,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   }
 }
 
-export const getStaticProps: GetStaticProps<any, { id: string }> = async ({ params }) => {
+export const getStaticProps: GetStaticProps<ProductProps, GetStaticProductParams> = async ({ params }) => {
   
   const productId = params?.id
 
@@ -85,9 +87,9 @@ export const getStaticProps: GetStaticProps<any, { id: string }> = async ({ para
   const product = {
     id: response.id,
     name: response.name,
-    description: response.description,
+    description: response.description!,
     imageUrl: response.images[0],
-    price: price.unit_amount,
+    price: price.unit_amount!,
     priceId: price.id
   }
 
